@@ -1,0 +1,77 @@
+---
+version: '3'
+
+services:
+  nextcloud:
+    image: lscr.io/linuxserver/nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    networks: 
+      - cloud
+    depends_on:
+      - nextcloud-db
+      - redis
+    ports:
+      - 8081:80
+    volumes:
+      - ./html:/var/www/html
+      - ./custom_apps:/var/www/html/custom_apps
+      - ./config:/var/www/html/config
+      - ./data:/var/www/html/data
+    env_file:
+      - ./.env
+
+  nextcloud-db:
+    image: mariadb
+    container_name: nextcloud-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    networks: 
+      - cloud
+    volumes:
+      - ./nextcloud-db:/var/lib/mysql
+    env_file:
+      - ./.env
+      
+  collabora:
+    image: collabora/code
+    container_name: collabora
+    restart: unless-stopped
+    networks: 
+      - cloud
+    env_file:
+      - ./.env
+    environment:
+      - username=${COLLABORA_USER}
+      - password=${COLLABORA_PASSWORD}
+      - domain=example.com
+      - extra_params=--o:ssl.enable=true
+    ports:
+      - 9980:9980
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    volumes:
+      - ./redis:/data  
+    networks: 
+      - cloud
+  
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    ports:
+      - '90:80'
+      - '981:81'
+      - '943:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+networks:
+  cloud:
+    name: cloud
+    driver: bridge
