@@ -14,10 +14,10 @@ services:
     ports:
       - 8081:80
     volumes:
-      - ./html:/var/www/html
-      - ./custom_apps:/var/www/html/custom_apps
-      - ./config:/var/www/html/config
-      - ./data:/var/www/html/data
+      - ./config:/config
+      - ./data:/data
+      - ./custom_apps:/config/custom_apps
+      - /mnt/wspolny_1:/external
     env_file:
       - ./.env
 
@@ -68,8 +68,7 @@ services:
       - '981:81'
       - '943:443'
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - ./nginx_data:/data
 
 networks:
   cloud:
